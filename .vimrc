@@ -1,10 +1,16 @@
 set nocompatible    "not vi compatible"
 filetype plugin on  "file-type based plugin selection
 filetype indent on  "file-type based indent
+
+"Prevent braces inside parenthesis from being marked as errors
+let c_no_curly_error=1
+
 syntax on           "syntax colouring
 
 set number          "line numbers"
 set ruler           "bottom right ruler"
+set pastetoggle=<F4>    "Paste mode toggle"
+set path=$PWD/**
 
 set history=500     "Increase command line history"
 set autoread        "Reload file when externally changed
@@ -26,40 +32,43 @@ set tabstop=4       "Tab width of 4
 set shiftwidth=4    "Indent width 4
 set ai              "auto indent
 set si              "smart indent
-set wrap            "Wrap long lines
+
 set laststatus=2    "Unsaved indicator
+set hidden
 
 "Return to last edited position when opening files"
 au BufReadPost * if line("'\"") > 1 && line("'\"") <= line("$") | exe "normal! g'\"" | endif
 
 let mapleader=" "
-nnoremap <space> <NOP>
+noremap <space> <NOP>
 "Quicksave"
 noremap <leader>w :w!<cr>
-"Move lines"
-nnoremap <leader>j :m +1!<cr>
-nnoremap <leader>k :m -2!<cr>
-noremap <leader>h ^
-noremap <leader>l $
+"Go to delimeter
+noremap <leader>j ]}
+noremap <leader>k [{
+"Move to front/back of line
+noremap <leader>hh ^
+noremap <leader>ll $
 "Delete word
-nnoremap <leader>d diw
+noremap <leader>d diw
 "Highlight word
 nnoremap <leader>v viw
 "Search highlighted text
 vnoremap <leader>v y/<c-r>"<cr>
-"Fast replace all
-nnoremap <leader>s :%s/
+"Replace instances of currently searched word
+nnoremap <leader>s :%s/<c-r>//
 "Replace all in selection
 vnoremap <leader>s :s/\%V
+"Search for yanked word
+nnoremap <leader>/ /<c-r>"<cr>
 
-"Select all C and h files for find/replace
-noremap <leader>ac :argadd **/*.c<CR>:argadd **/*.h<CR>
-"Select all py files for find replace
-noremap <leader>ap :argadd **/*.py<CR>
 "Find in all files
-nnoremap <leader>? :argdo /
-"Replace in all files
-nnoremap <leader>S :argdo :%s/
+nnoremap <leader>? :Ack <c-r>" .<cr>
+vnoremap <leader>? y:Ack <c-r>" .<cr>
+
+"Buffer management
+nnoremap <leader>b :ls<cr>:b<space>
+nnoremap <leader>o :b#<cr>
 
 "Disable arrows
 noremap <Left> <NOP>
@@ -74,7 +83,7 @@ inoremap jj <ESC>
 "Jump to end in insert mode
 inoremap <c-a> <ESC>A
 "Insert ; at end in insert mode
-inoremap <c-A> <ESC>A;
+inoremap <c-s> <ESC>A;
 
 "plug-vim
 call plug#begin('~/.vim/plugged')
@@ -82,27 +91,25 @@ Plug 'ctrlpvim/ctrlp.vim'
 Plug 'danro/rename.vim'
 Plug 'airblade/vim-gitgutter'
 Plug 'scrooloose/nerdtree'
-Plug 'jistr/vim-nerdtree-tabs'
 Plug 'scrooloose/nerdcommenter'
 Plug 'mileszs/ack.vim'
 Plug 'jiangmiao/auto-pairs'
 Plug 'easymotion/vim-easymotion'
 Plug 'SirVer/ultisnips'
 Plug 'honza/vim-snippets'
+Plug 'tpope/vim-surround'
 Plug 'brookhong/cscope.vim'
 Plug 'Valloric/YouCompleteMe'
+Plug 'tomlion/vim-solidity'
+Plug 'pangloss/vim-javascript'
 call plug#end()
 
 "Ctr d for Nerdtree toggle
-nnoremap <C-d> :NERDTreeTabsToggle<cr>
-
-"Have ctrl p open new tabs
-let g:ctrlp_prompt_mappings = {
-    \ 'AcceptSelection("e")': ['<2-LeftMouse>'],
-    \ 'AcceptSelection("t")': ['<cr>'],
-    \ }
+nnoremap <C-d> :NERDTreeToggle<cr>
 
 "Cscope related commands
+nnoremap <leader>fa :call CscopeFindInteractive(expand('<cword>'))<CR>
+nnoremap <leader>lc :call ToggleLocationList()<CR>
 " s: Find this C symbol
 nnoremap  <leader>fs :call CscopeFind('s', expand('<cword>'))<CR>
 " g: Find this definition
@@ -126,3 +133,8 @@ let g:cscope_silent=1
 let g:UltiSnipsExpandTrigger = '<C-j>'
 let g:UltiSnipsJumpForwardTrigger = '<C-j>'
 let g:UltiSnipsJumpBackwardTrigger = '<C-k>'
+
+set tags=./tags;
+set cscopetag
+set csto=0
+
