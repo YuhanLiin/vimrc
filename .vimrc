@@ -7,7 +7,8 @@ let c_no_curly_error=1
 
 syntax on           "syntax colouring
 
-set number          "line numbers"
+set nu              "line numbers"
+set rnu             "Relative line numbers"
 set ruler           "bottom right ruler"
 set pastetoggle=<F4>    "Paste mode toggle"
 set path=$PWD/**
@@ -18,8 +19,8 @@ set wildmenu        "autocomplete
 
 set smartcase       "Case sensitive search when caps are included
 set ignorecase      "Case insensitive without caps
-set hlsearch        "Highlight searches
 set incsearch       "Search as I type
+set nohls
 set showmatch       "Show matching parenthesis
 
 set lazyredraw      "Don't redraw after every macro
@@ -34,7 +35,14 @@ set ai              "auto indent
 set si              "smart indent
 
 set laststatus=2    "Unsaved indicator
-set hidden
+set hidden          "Open new buffers while current one is unsaved
+set cmdheight=2     "Better message display
+set signcolumn=yes  "Show signs always
+set updatetime=300  "Faster cursorhold
+set shortmess+=c    "No ins-completion-menu messages
+
+set undodir=~/.vimdid   "Persistent undo history
+set undofile
 
 "Return to last edited position when opening files"
 au BufReadPost * if line("'\"") > 1 && line("'\"") <= line("$") | exe "normal! g'\"" | endif
@@ -62,79 +70,125 @@ vnoremap <leader>s :s/\%V
 "Search for yanked word
 nnoremap <leader>/ /<c-r>"<cr>
 
-"Find in all files
-nnoremap <leader>? :Ack <c-r>" .<cr>
-vnoremap <leader>? y:Ack <c-r>" .<cr>
-
-"Buffer management
+"Switch buffers
 nnoremap <leader>b :ls<cr>:b<space>
+"Go to last buffer
 nnoremap <leader>o :b#<cr>
+"Go to last edited buffer
+nnoremap <BS> <C-^>
 
-"Disable arrows
+"Disable arrows except for scrolling floating windows
+noremap <expr> <Down> coc#util#has_float() ? coc#util#float_scroll(1) : '<NOP>'
+noremap <expr> <Up> coc#util#has_float() ? coc#util#float_scroll(0) : '<NOP>'
 noremap <Left> <NOP>
 noremap <Right> <NOP>
-noremap <Up> <NOP>
-noremap <Down> <NOP>
 
 "Remove all trailing whitespace by pressing F3
 noremap <F3> :let _s=@/<Bar>:%s/\s\+$//e<Bar>:let @/=_s<Bar><CR>
 "Press jj to go to command mode
 inoremap jj <ESC>
+snoremap jj <ESC>
 "Jump to end in insert mode
 inoremap <c-a> <ESC>A
 "Insert ; at end in insert mode
 inoremap <c-s> <ESC>A;
 
+if has('nvim')
+    tnoremap jj <C-\><C-n>
+end
+
 "plug-vim
 call plug#begin('~/.vim/plugged')
-Plug 'ctrlpvim/ctrlp.vim'
+Plug 'junegunn/fzf', { 'dir': '~/.fzf', 'do': './install --all' }
+Plug 'junegunn/fzf.vim'
 Plug 'danro/rename.vim'
-Plug 'airblade/vim-gitgutter'
-Plug 'scrooloose/nerdtree'
-Plug 'scrooloose/nerdcommenter'
-Plug 'mileszs/ack.vim'
 Plug 'jiangmiao/auto-pairs'
-Plug 'easymotion/vim-easymotion'
-Plug 'SirVer/ultisnips'
-Plug 'honza/vim-snippets'
+Plug 'justinmk/vim-sneak'
 Plug 'tpope/vim-surround'
-Plug 'brookhong/cscope.vim'
-Plug 'Valloric/YouCompleteMe'
+Plug 'neoclide/coc.nvim', {'branch': 'release'}
+Plug 'vim-syntastic/syntastic'
+Plug 'scrooloose/nerdcommenter'
+Plug 'airblade/vim-rooter'
+
 Plug 'tomlion/vim-solidity'
-Plug 'pangloss/vim-javascript'
+Plug 'pangloss/vim-javascript', {'for': 'javascript'}
+Plug 'rust-lang/rust.vim'
+Plug 'othree/html5.vim'
 call plug#end()
 
-"Ctr d for Nerdtree toggle
-nnoremap <C-d> :NERDTreeToggle<cr>
+"FZF triggers
+noremap <C-p> :Files<cr>
+noremap <leader><C-p> :GFiles<cr>
 
-"Cscope related commands
-nnoremap <leader>fa :call CscopeFindInteractive(expand('<cword>'))<CR>
-nnoremap <leader>lc :call ToggleLocationList()<CR>
-" s: Find this C symbol
-nnoremap  <leader>fs :call CscopeFind('s', expand('<cword>'))<CR>
-" g: Find this definition
-nnoremap  <leader>fg :call CscopeFind('g', expand('<cword>'))<CR>
-" d: Find functions called by this function
-nnoremap  <leader>fd :call CscopeFind('d', expand('<cword>'))<CR>
-" c: Find functions calling this function
-nnoremap  <leader>fc :call CscopeFind('c', expand('<cword>'))<CR>
-" t: Find this text string
-nnoremap  <leader>ft :call CscopeFind('t', expand('<cword>'))<CR>
-" e: Find this egrep pattern
-nnoremap  <leader>fe :call CscopeFind('e', expand('<cword>'))<CR>
-" f: Find this file
-nnoremap  <leader>ff :call CscopeFind('f', expand('<cword>'))<CR>
-" i: Find files #including this file
-nnoremap <leader>fi :call CscopeFind('i', expand('<cword>'))<CR>
-" silence cscope when saving
-let g:cscope_silent=1
+"Sneak mappings for f and t
+map f <Plug>Sneak_f
+map F <Plug>Sneak_F
+map t <Plug>Sneak_t
+map T <Plug>Sneak_T
 
-" UltiSnips triggering
-let g:UltiSnipsExpandTrigger = '<C-j>'
-let g:UltiSnipsJumpForwardTrigger = '<C-j>'
-let g:UltiSnipsJumpBackwardTrigger = '<C-k>'
+"Rust plugin options
+let g:rustfmt_autosave = 1
+let g:rust_keep_autopairs_default = 1
+"let g:rust_cargo_check_tests = 1
+"let g:rust_cargo_check_benches = 1
 
-set tags=./tags;
-set cscopetag
-set csto=0
+""Syntastic
+"let g:syntastic_check_on_wq = 0
+"let g:syntastic_mode_map = { 'mode': 'passive' }
+"nnoremap <F7> :SyntasticCheck<cr>:Errors<cr><c-w>j
+"nnoremap <leader>j :lnext<cr>
+"nnoremap <leader>k :lprev<cr>
 
+"Coc settings
+"Autocomplete automatically
+inoremap <silent><expr> <TAB>
+	  \ pumvisible() ? "\<C-n>" :
+	  \ <SID>check_back_space() ? "\<TAB>" :
+	  \ coc#refresh()
+
+let g:coc_snippet_next = '<tab>'
+inoremap <expr><S-TAB> pumvisible() ? "\<C-p>" : "\<C-h>"
+
+function! s:check_back_space() abort
+  let col = col('.') - 1
+  return !col || getline('.')[col - 1]  =~# '\s'
+endfunction
+
+" Use <cr> to confirm completion, `<C-g>u` means break undo chain at current position.
+" Coc only does snippet and additional edit on confirm.
+inoremap <silent><expr> <cr> pumvisible() ? coc#_select_confirm()
+				\: "\<C-g>u\<CR>\<c-r>=coc#on_enter()\<CR>"
+
+" Remap keys for gotos
+nmap <silent> gd <Plug>(coc-definition)
+nmap <silent> gy <Plug>(coc-type-definition)
+nmap <silent> gi <Plug>(coc-implementation)
+nmap <silent> gr <Plug>(coc-references)
+
+" Use K to show documentation in preview window
+nnoremap <silent> K :call <SID>show_documentation()<CR>
+
+function! s:show_documentation()
+  if (index(['vim','help'], &filetype) >= 0)
+    execute 'h '.expand('<cword>')
+  else
+    call CocAction('doHover')
+  endif
+endfunction
+
+" Highlight symbol under cursor on CursorHold
+autocmd CursorHold * silent call CocActionAsync('highlight')
+
+" Remap for rename current word
+nmap <leader>r <Plug>(coc-rename)
+nmap <silent> <leader>k <Plug>(coc-diagnostic-prev)
+nmap <silent> <leader>j <Plug>(coc-diagnostic-next)
+nmap <leader>q <Plug>(coc-fix-current)
+nmap <leader><leader>r <Plug>(coc-refactor)
+
+" Find symbol of current document
+nnoremap <silent> <leader><leader>o  :<C-u>CocList outline<cr>
+" Search workspace symbols
+nnoremap <silent> <leader><leader>s  :<C-u>CocList -I symbols<cr>
+" Diagnostics
+nnoremap <silent> <leader><leader>d  :<C-u>CocList diagnostics<cr>
