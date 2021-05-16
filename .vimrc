@@ -44,6 +44,9 @@ set shortmess+=c    "No ins-completion-menu messages
 set undodir=~/.vimdid   "Persistent undo history
 set undofile
 
+set foldmethod=syntax
+set foldlevel=99
+
 "Return to last edited position when opening files"
 au BufReadPost * if line("'\"") > 1 && line("'\"") <= line("$") | exe "normal! g'\"" | endif
 
@@ -51,22 +54,15 @@ let mapleader=" "
 noremap <space> <NOP>
 "Quicksave"
 noremap <leader>w :w!<cr>
-"Go to delimeter
-noremap <leader>j ]}
-noremap <leader>k [{
 "Move to front/back of line
 noremap <leader>hh ^
 noremap <leader>ll $
-"Delete word
-noremap <leader>d diw
-"Highlight word
-nnoremap <leader>v viw
 "Search highlighted text
-vnoremap <leader>v y/<c-r>"<cr>
+xnoremap <leader>v y/<c-r>"<cr>
 "Replace instances of currently searched word
 nnoremap <leader>s :%s/<c-r>//
 "Replace all in selection
-vnoremap <leader>s :s/\%V
+xnoremap <leader>s :s/\%V
 "Search for yanked word
 nnoremap <leader>/ /<c-r>"<cr>
 
@@ -78,8 +74,8 @@ nnoremap <leader>o :b#<cr>
 nnoremap <BS> <C-^>
 
 "Disable arrows except for scrolling floating windows
-noremap <expr> <Down> coc#util#has_float() ? coc#util#float_scroll(1) : '<NOP>'
-noremap <expr> <Up> coc#util#has_float() ? coc#util#float_scroll(0) : '<NOP>'
+noremap <expr> <Down> coc#float#has_scroll() ? coc#float#scroll(1) : '\<NOP>'
+noremap <expr> <Up> coc#float#has_scroll() ? coc#float#scroll(0) : '\<NOP>'
 noremap <Left> <NOP>
 noremap <Right> <NOP>
 
@@ -97,6 +93,17 @@ if has('nvim')
     tnoremap jj <C-\><C-n>
 end
 
+"Termdebug
+packadd termdebug
+let g:termdebug_wide = 1
+let termdebugger = "rust-gdb" "For debugging Rust specifically
+nnoremap <leader><leader>h :Continue<CR>
+nnoremap <leader><leader>j :Step<CR>
+nnoremap <leader><leader>k :Over<CR>
+nnoremap <leader><leader>l :Finish<CR>
+nnoremap <leader><leader>b :Break<CR>
+nnoremap <leader><leader>n :Clear<CR>
+
 "plug-vim
 call plug#begin('~/.vim/plugged')
 Plug 'junegunn/fzf', { 'dir': '~/.fzf', 'do': './install --all' }
@@ -106,7 +113,6 @@ Plug 'jiangmiao/auto-pairs'
 Plug 'justinmk/vim-sneak'
 Plug 'tpope/vim-surround'
 Plug 'neoclide/coc.nvim', {'branch': 'release'}
-Plug 'vim-syntastic/syntastic'
 Plug 'scrooloose/nerdcommenter'
 Plug 'airblade/vim-rooter'
 
@@ -114,6 +120,7 @@ Plug 'tomlion/vim-solidity'
 Plug 'pangloss/vim-javascript', {'for': 'javascript'}
 Plug 'rust-lang/rust.vim'
 Plug 'othree/html5.vim'
+Plug 'petRUShka/vim-opencl'
 call plug#end()
 
 "FZF triggers
@@ -126,18 +133,14 @@ map F <Plug>Sneak_F
 map t <Plug>Sneak_t
 map T <Plug>Sneak_T
 
+"rooter patterns
+let g:rooter_patterns = ['.git', '_darcs', '.hg', '.bzr', '.svn', 'Makefile', 'Cargo.toml']
+
 "Rust plugin options
 let g:rustfmt_autosave = 1
 let g:rust_keep_autopairs_default = 1
 "let g:rust_cargo_check_tests = 1
 "let g:rust_cargo_check_benches = 1
-
-""Syntastic
-"let g:syntastic_check_on_wq = 0
-"let g:syntastic_mode_map = { 'mode': 'passive' }
-"nnoremap <F7> :SyntasticCheck<cr>:Errors<cr><c-w>j
-"nnoremap <leader>j :lnext<cr>
-"nnoremap <leader>k :lprev<cr>
 
 "Coc settings
 "Autocomplete automatically
@@ -179,12 +182,22 @@ endfunction
 " Highlight symbol under cursor on CursorHold
 autocmd CursorHold * silent call CocActionAsync('highlight')
 
-" Remap for rename current word
 nmap <leader>r <Plug>(coc-rename)
 nmap <silent> <leader>k <Plug>(coc-diagnostic-prev)
 nmap <silent> <leader>j <Plug>(coc-diagnostic-next)
 nmap <leader>q <Plug>(coc-fix-current)
-nmap <leader><leader>r <Plug>(coc-refactor)
+nmap <leader>a <Plug>(coc-codeaction-cursor)
+xmap <leader>a <Plug>(coc-codeaction-selected)
+
+nmap <silent> <C-s> <Plug>(coc-range-select)
+xmap <silent> <C-s> <Plug>(coc-range-select)
+nmap <silent> <C-a> <Plug>(coc-range-select-backward)
+xmap <silent> <C-a> <Plug>(coc-range-select-backward)
+
+xmap af <Plug>(coc-funcobj-a)
+omap af <Plug>(coc-funcobj-a)
+xmap ac <Plug>(coc-classobj-a)
+omap ac <Plug>(coc-classobj-a)
 
 " Find symbol of current document
 nnoremap <silent> <leader><leader>o  :<C-u>CocList outline<cr>
@@ -192,3 +205,7 @@ nnoremap <silent> <leader><leader>o  :<C-u>CocList outline<cr>
 nnoremap <silent> <leader><leader>s  :<C-u>CocList -I symbols<cr>
 " Diagnostics
 nnoremap <silent> <leader><leader>d  :<C-u>CocList diagnostics<cr>
+" Refactor
+nmap <leader><leader>f <Plug>(coc-refactor)
+" Smart replace
+nnoremap <silent> <leader><leader>r :<C-u>CocCommand rust-analyzer.ssr<cr>
