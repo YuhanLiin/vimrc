@@ -7,10 +7,11 @@ let c_no_curly_error=1
 
 syntax on           "syntax colouring
 
+colorscheme vim
+set background=dark
+
 set nu              "line numbers"
-set rnu             "Relative line numbers"
 set ruler           "bottom right ruler"
-set pastetoggle=<F4>    "Paste mode toggle"
 set path=$PWD/**
 
 set history=500     "Increase command line history"
@@ -47,6 +48,11 @@ set undofile
 set foldmethod=syntax
 set foldlevel=99
 
+set nobackup
+set nowritebackup
+
+highlight SignColumn guibg=none
+
 "Return to last edited position when opening files"
 au BufReadPost * if line("'\"") > 1 && line("'\"") <= line("$") | exe "normal! g'\"" | endif
 
@@ -73,9 +79,8 @@ nnoremap <leader>o :b#<cr>
 "Go to last edited buffer
 nnoremap <BS> <C-^>
 
-"Disable arrows except for scrolling floating windows
-noremap <expr> <Down> coc#float#has_scroll() ? coc#float#scroll(1) : '\<NOP>'
-noremap <expr> <Up> coc#float#has_scroll() ? coc#float#scroll(0) : '\<NOP>'
+noremap <Up> <NOP>
+noremap <Down> <NOP>
 noremap <Left> <NOP>
 noremap <Right> <NOP>
 
@@ -94,7 +99,6 @@ if has('nvim')
 end
 
 "Termdebug
-packadd termdebug
 let g:termdebug_wide = 1
 let termdebugger = "rust-gdb" "For debugging Rust specifically
 nnoremap <leader><leader>h :Continue<CR>
@@ -109,16 +113,15 @@ call plug#begin('~/.vim/plugged')
 Plug 'junegunn/fzf', { 'dir': '~/.fzf', 'do': './install --all' }
 Plug 'junegunn/fzf.vim'
 Plug 'danro/rename.vim'
+let g:AutoPairsMapCR=0
 Plug 'jiangmiao/auto-pairs'
-Plug 'justinmk/vim-sneak'
 Plug 'tpope/vim-surround'
 Plug 'neoclide/coc.nvim', {'branch': 'release'}
 Plug 'scrooloose/nerdcommenter'
 Plug 'airblade/vim-rooter'
+Plug 'airblade/vim-gitgutter'
 
-Plug 'tomlion/vim-solidity'
 Plug 'pangloss/vim-javascript', {'for': 'javascript'}
-Plug 'rust-lang/rust.vim'
 Plug 'othree/html5.vim'
 Plug 'petRUShka/vim-opencl'
 call plug#end()
@@ -127,40 +130,39 @@ call plug#end()
 noremap <C-p> :Files<cr>
 noremap <leader><C-p> :GFiles<cr>
 
-"Sneak mappings for f and t
-map f <Plug>Sneak_f
-map F <Plug>Sneak_F
-map t <Plug>Sneak_t
-map T <Plug>Sneak_T
+highlight GitGutterAdd guifg=SeaGreen
+highlight GitGutterChange guifg=Cyan
+highlight GitGutterDelete guifg=Magenta
 
 "rooter patterns
 let g:rooter_patterns = ['.git', '_darcs', '.hg', '.bzr', '.svn', 'Makefile', 'Cargo.toml']
 
-"Rust plugin options
-let g:rustfmt_autosave = 1
-let g:rust_keep_autopairs_default = 1
-"let g:rust_cargo_check_tests = 1
-"let g:rust_cargo_check_benches = 1
+let g:gitgutter_grep = 'rg'
 
-"Coc settings
+"Disable arrows except for scrolling floating windows
+noremap <expr> <Down> coc#float#has_scroll() ? coc#float#scroll(1) : '\<NOP>'
+noremap <expr> <Up> coc#float#has_scroll() ? coc#float#scroll(0) : '\<NOP>'
+
 "Autocomplete automatically
 inoremap <silent><expr> <TAB>
-	  \ pumvisible() ? "\<C-n>" :
-	  \ <SID>check_back_space() ? "\<TAB>" :
-	  \ coc#refresh()
+      \ coc#pum#visible() ? coc#pum#next(1) :
+      \ CheckBackspace() ? "\<TAB>" :
+      \ coc#refresh()
 
-let g:coc_snippet_next = '<tab>'
-inoremap <expr><S-TAB> pumvisible() ? "\<C-p>" : "\<C-h>"
+inoremap <expr><S-TAB> coc#pum#visible() ? coc#pum#prev(1) : "\<C-h>"
 
 function! s:check_back_space() abort
   let col = col('.') - 1
   return !col || getline('.')[col - 1]  =~# '\s'
 endfunction
 
-" Use <cr> to confirm completion, `<C-g>u` means break undo chain at current position.
-" Coc only does snippet and additional edit on confirm.
-inoremap <silent><expr> <cr> pumvisible() ? coc#_select_confirm()
-				\: "\<C-g>u\<CR>\<c-r>=coc#on_enter()\<CR>"
+" Use <cr> to confirm completion
+inoremap <silent><expr> <CR> coc#pum#visible() ? coc#pum#confirm() : "\<CR>\<Plug>AutoPairsReturn"
+
+function! CheckBackspace() abort
+  let col = col('.') - 1
+  return !col || getline('.')[col - 1]  =~# '\s'
+endfunction
 
 " Remap keys for gotos
 nmap <silent> gd <Plug>(coc-definition)
@@ -181,6 +183,9 @@ endfunction
 
 " Highlight symbol under cursor on CursorHold
 autocmd CursorHold * silent call CocActionAsync('highlight')
+
+" Update signature help
+autocmd User CocJumpPlaceholder call CocActionAsync('showSignatureHelp')
 
 nmap <leader>r <Plug>(coc-rename)
 nmap <silent> <leader>k <Plug>(coc-diagnostic-prev)
@@ -209,3 +214,5 @@ nnoremap <silent> <leader><leader>d  :<C-u>CocList diagnostics<cr>
 nmap <leader><leader>f <Plug>(coc-refactor)
 " Smart replace
 nnoremap <silent> <leader><leader>r :<C-u>CocCommand rust-analyzer.ssr<cr>
+
+highlight CocInlayHint guibg=Grey
