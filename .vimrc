@@ -7,6 +7,8 @@ let c_no_curly_error=1
 
 syntax on           "syntax colouring
 
+set clipboard+=unnamedplus
+
 colorscheme vim
 set background=dark
 
@@ -118,12 +120,7 @@ Plug 'jiangmiao/auto-pairs'
 Plug 'tpope/vim-surround'
 Plug 'neoclide/coc.nvim', {'branch': 'release'}
 Plug 'scrooloose/nerdcommenter'
-Plug 'airblade/vim-rooter'
 Plug 'airblade/vim-gitgutter'
-
-Plug 'pangloss/vim-javascript', {'for': 'javascript'}
-Plug 'othree/html5.vim'
-Plug 'petRUShka/vim-opencl'
 call plug#end()
 
 "FZF triggers
@@ -136,8 +133,6 @@ highlight GitGutterDelete guifg=Magenta
 
 "rooter patterns
 let g:rooter_patterns = ['.git', '_darcs', '.hg', '.bzr', '.svn', 'Makefile', 'Cargo.toml']
-
-let g:gitgutter_grep = 'rg'
 
 "Disable arrows except for scrolling floating windows
 noremap <expr> <Down> coc#float#has_scroll() ? coc#float#scroll(1) : '\<NOP>'
